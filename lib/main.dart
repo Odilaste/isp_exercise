@@ -1,9 +1,12 @@
-// ignore_for_file: prefer_const_constructors, duplicate_ignore
+// ignore_for_file: prefer_const_constructors, duplicate_ignore, await_only_futures
 
 import 'package:flutter/material.dart';
+import 'package:flutter_exercise_1/bdd_sqlite/sqlite_service.dart';
 import 'package:flutter_exercise_1/forms/calculage.dart';
 import 'package:flutter_exercise_1/forms/login.dart';
 import 'package:flutter_exercise_1/operations.dart';
+
+import 'bdd_sqlite/model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,14 +44,6 @@ class MyHomePage extends StatefulWidget {
 enum SingingCharacter { Client, Employe }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
   TextEditingController ctr_Names = TextEditingController();
   TextEditingController ctr_password = TextEditingController();
 
@@ -58,6 +53,29 @@ class _MyHomePageState extends State<MyHomePage> {
   bool licenciate = true;
 
   cp cp_L2_GI = cp("KATEMBO", "0002", 26);
+
+  //BDD
+  late SqliteService _sqliteService;
+  Note UneNote = Note(id: "NULL", description: "NULL");
+  // All items
+  List<Note> _notes = [];
+// This function is used to fetch all data from the database
+  Future _refreshNotes() async {
+    final data = await _sqliteService.getItems();
+    setState(() {
+      _notes = data;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _sqliteService = SqliteService();
+    _sqliteService.initializeDB().whenComplete(() async {
+      await _refreshNotes();
+      setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,8 +201,14 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: const Text('Annuler'),
                       ),
                       TextButton(
-                        onPressed: () =>
-                            print("Vous avez cliqué sur le bouton Confimer"),
+                        onPressed: () {
+                          print("Vous avez cliqué sur le bouton Confimer");
+                          // setState(() {
+                          //   UneNote.set_id(ctr_Names.text);
+                          //   UneNote.set_desc(ctr_password.text);
+                          // });
+                          // _sqliteService.createItem(UneNote);
+                        },
                         child: const Text('Confirmer'),
                       ),
                     ],
@@ -200,15 +224,26 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: (() {
                   print(cp_L2_GI.Matricule);
                 }),
-                child: Text("Manipulation des classes"))
+                child: Text("Manipulation des classes")),
+
+            // ElevatedButton(
+            //     onPressed: (() {
+            //       setState(() {
+            //         _notes = _sqliteService.get_One_Item(ctr_Names.text)
+            //             as List<Note>;
+            //         ctr_password.text = _notes.elementAt(0).description;
+            //       });
+            //       _sqliteService.createItem(UneNote);
+            //     }),
+            //     child: Text('Lire un enregistrement de la BDD')),
+            // ElevatedButton(
+            //     onPressed: (() {}),
+            //     child: Text('Effacer un enregistrement de la BDD'))
           ],
         ),
       )),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+
+      // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
